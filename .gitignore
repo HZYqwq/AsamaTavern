@@ -27,5 +27,10 @@ credentials.json
 *.swp
 .DS_Store
 
+# Python 缓存（构建脚本跑起来就会生成）
+__pycache__/
+*.pyc
+*.pyo
+
 # 日志
 *.log
