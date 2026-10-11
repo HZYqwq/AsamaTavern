@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AsamaTavern</title>
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --card:#F5F7FA;
+    --me:#E3F0FF;
+    --acc:#3B9EFF;
+    --acc-dark:#2B8AE8;
+    --tx:#1F2733;
+    --dim:#8A94A6;
+    --line:#EDF0F5;
+    --ok:#2FB37A;
+    --err:#E5484D;
+    --warn:#E08A2B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);
+    font:15px/1.6 -apple-system,"HarmonyOS Sans SC","PingFang SC","Noto Sans CJK SC",
+    "Microsoft YaHei",sans-serif}
+  body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+
+  header{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+    padding:12px 14px;border-bottom:1px solid var(--line);background:#fff}
+  header h1{font-size:16px;margin:0;font-weight:600;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .back{color:var(--acc);font-size:20px;cursor:pointer;padding:0 4px}
+  .gear{color:var(--dim);font-size:18px;cursor:pointer}
+
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px}
+
+  .row{display:flex;gap:8px;align-items:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  label{display:block;font-size:12.5px;color:var(--dim);margin:12px 0 5px}
+  input,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;font-size:15px;font-family:inherit;background:#fff;color:var(--tx);
+    outline:none}
+  input:focus,textarea:focus{border-color:var(--acc)}
+  textarea{resize:vertical;min-height:90px;line-height:1.5}
+  select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+    font-size:15px;background:#fff;color:var(--tx);font-family:inherit}
+
+  button{border:none;border-radius:10px;padding:11px 16px;font-size:15px;
+    font-family:inherit;background:var(--card);color:var(--tx);cursor:pointer}
+  button:active{opacity:.75}
+  button.primary{background:var(--acc);color:#fff;font-weight:600}
+  button.wide{width:100%}
+  button:disabled{opacity:.45}
+
+  .muted{font-size:12.5px;color:var(--dim);line-height:1.65}
+  .card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h3{margin:0 0 4px;font-size:14px;font-weight:600}
+
+  /* ---------------- 向导 ---------------- */
+  .steps{display:flex;gap:6px;margin-bottom:18px}
+  .step{flex:1;height:4px;border-radius:2px;background:var(--line)}
+  .step.on{background:var(--acc)}
+  .wtitle{font-size:21px;font-weight:600;margin:0 0 6px}
+  .wsub{font-size:13.5px;color:var(--dim);margin:0 0 18px;line-height:1.6}
+
+  /* ---------------- 聊天 ---------------- */
+  .bubbles{padding-bottom:6px}
+  .b{display:flex;flex-direction:column;margin-bottom:14px}
+  .b.me{align-items:flex-end}
+  .b .who{font-size:11.5px;color:var(--dim);margin:0 4px 4px}
+  .b .body{max-width:86%;padding:10px 13px;border-radius:14px;
+    background:var(--card);word-wrap:break-word;overflow-wrap:anywhere;line-height:1.65}
+  .b.me .body{background:var(--me)}
+  .b .body p{margin:0 0 8px}
+  .b .body p:last-child{margin-bottom:0}
+  .b .acts{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .b .acts button{padding:5px 12px;font-size:12.5px}
+  .msgimg{margin-top:8px;max-width:86%}
+  .b.me .msgimg{align-self:flex-end}
+  .msgimg img{cursor:zoom-in}
+  .attachbar{flex:0 0 auto;padding:6px 14px;font-size:12.5px;color:var(--dim);
+    border-top:1px solid var(--line);background:#F8FAFF}
+  .thinkbox{max-width:86%;margin:0 0 6px;font-size:12.5px;color:var(--dim)}
+  .thinkbox summary{cursor:pointer;color:var(--acc);outline:none}
+  .thinkbox div{margin-top:6px;padding:8px 10px;background:#F8FAFF;
+    border-left:2px solid var(--acc);border-radius:6px;line-height:1.6}
+  .tryrow{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .tryrow img{width:74px;height:74px;object-fit:cover;border-radius:8px;flex:0 0 auto;cursor:zoom-in}
+  .trymeta{flex:1;min-width:0;font-size:12.5px}
+  .trymeta button{padding:3px 10px;font-size:11.5px}
+  .okc{color:#2FB37A}
+  .warnc{color:#E08A2B}
+  .bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-bottom:8px}
+  .fill{height:100%;background:var(--acc);transition:width .3s}
+
+  .memline{flex:0 0 auto;display:flex;align-items:center;gap:8px;
+    padding:7px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--dim)}
+  .memline .grow{flex:1}
+
+  .composer{flex:0 0 auto;display:flex;gap:8px;align-items:flex-end;
+    padding:9px 12px 12px;border-top:1px solid var(--line);background:#fff}
+  .composer textarea{flex:1;min-height:42px;max-height:130px;padding:10px 12px;
+    border-radius:12px;resize:none}
+  .composer button{padding:11px 18px}
+
+  /* ---------------- 弹窗 ---------------- */
+  #scrim{position:fixed;inset:0;background:rgba(31,39,51,.35);display:none;
+    align-items:center;justify-content:center;padding:18px;z-index:50}
+  #scrim.on{display:flex}
+  #modal{background:#fff;border-radius:16px;width:100%;max-width:560px;
+    max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+  #modalHead{display:flex;align-items:center;padding:15px 16px 8px}
+  #modalTitle{font-size:16px;font-weight:600;flex:1}
+  #modalX{color:var(--dim);font-size:20px;cursor:pointer;padding:0 6px}
+  #modalBody{padding:0 16px 14px;overflow-y:auto;font-size:14.5px;line-height:1.7;
+    white-space:pre-wrap;word-wrap:break-word}
+  #modalBody.html-view{white-space:normal}
+  #modalFoot{display:flex;gap:8px;justify-content:flex-end;padding:10px 16px 16px;
+    border-top:1px solid var(--line);flex-wrap:wrap}
+  #modalBody img{max-width:100%;border-radius:10px}
+
+  /* ---------------- 自检 ---------------- */
+  .check{display:flex;gap:9px;align-items:flex-start;padding:7px 0;
+    border-bottom:1px dashed var(--line);font-size:13.5px}
+  .check:last-child{border-bottom:none}
+  .check .ic{flex:0 0 18px;text-align:center}
+  .check .tx{flex:1;min-width:0}
+  .check .tx b{font-weight:600}
+  .ic.ok{color:var(--ok)} .ic.err{color:var(--err)}
+  .ic.wait{color:var(--dim)} .ic.warn{color:var(--warn)}
+
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;
+    background:var(--card);color:var(--dim);font-size:11.5px;margin-left:6px}
+  .pill.ok{background:#E6F7F0;color:var(--ok)}
+  .pill.err{background:#FDECEC;color:var(--err)}
+
+  .toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);
+    background:#1F2733;color:#fff;padding:9px 16px;border-radius:20px;
+    font-size:13.5px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;
+    max-width:86%;text-align:center}
+  .toast.on{opacity:1}
+
+  .hide{display:none !important}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="back hide" id="btnBack">‹</span>
+  <h1 id="title">AsamaTavern</h1>
+  <span class="pill hide" id="connPill"></span>
+  <span class="gear" id="btnGear">⚙</span>
+</header>
+
+<main id="main"></main>
+
+<div class="attachbar hide" id="attachBar"></div>
+<div class="memline hide" id="memline">
+  <span id="memText">记忆 0 条</span>
+  <span class="grow"></span>
+  <button style="padding:5px 12px;font-size:12.5px" id="btnMem">归纳</button>
+  <button style="padding:5px 12px;font-size:12.5px" id="btnSearch">联网</button>
+</div>
+
+<div class="composer hide" id="composer">
+  <button id="btnPlus" style="padding:11px 14px">＋</button>
+  <textarea id="input" rows="1" placeholder="说点什么…"></textarea>
+  <button id="btnCont" style="padding:11px 14px">续写</button>
+  <button class="primary" id="btnSend">发送</button>
+</div>
+
+<div id="scrim">
+  <div id="modal">
+    <div id="modalHead">
+      <div id="modalTitle"></div>
+      <div id="modalX">✕</div>
+    </div>
+    <div id="modalBody"></div>
+    <div id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   AsamaTavern · 本地版
+   所有数据在手机上，不经过任何服务器。
+   ============================================================ */
+
+/** 界面日志。导出时整份带走，排错全靠它。 */
+var LOG = [];
+function log(msg){
+  var d = new Date();
+  function p(n){ return (n < 10 ? '0' : '') + n; }
+  LOG.push('[' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '] ' + msg);
+  if(LOG.length > 800) LOG.shift();
+}
+
+var S = {
+  screen: 'boot',       // boot | wizard | chat
+  step: 0,
+  presets: [],
+  api: { base:'', model:'', hasKey:false, keyHint:'' },
+  persona: {},
+  chars: [],
+  char: null,
+  messages: [],
+  chatId: 'main',
+  params: { temperature:0.9, topP:1.0, maxTokens:1024, ctxLen:20,
+            freqPen:0.0, presPen:0.0, deepThinking:false },
+  prefix: '',
+  worlds: [],
+  img: { base:'https://api.minimaxi.com', model:'image-01', hasKey:false, keyHint:'' },
+  imgRef: '',
+  search: { base:'https://api.minimaxi.com', hasKey:false, keyHint:'' },
+  autoSearch: true,
+  attach: { images: [], text: '', label: '' },
+  searched: false,
+  imgCache: {},
+  personas: [],
+  worldOn: {},          // 世界书启用状态，按 id 记
+  pending: {},
+  nextLocal: 1,
+  busy: false
+};
+
+var PRESET_FALLBACK = [
+  { name:'DeepSeek',      base:'https://api.deepseek.com/v1',  model:'deepseek-chat',      vision:false },
+  { name:'GLM 智谱',      base:'https://open.bigmodel.cn/api/paas/v4', model:'glm-4-plus', vision:true },
+  { name:'Kimi 月之暗面', base:'https://api.moonshot.cn/v1',   model:'moonshot-v1-32k',    vision:true },
+  { name:'Qwen 通义千问', base:'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model:'qwen-plus', vision:true }
+];
+
+/* ---------------------------------------------------------------- 桥接 */
+
+/**
+ * 调一个本机方法。
+ *
+ * 这里刻意写成显式列举，而不是 AT[name](...) 之类的动态调用。原因有两个，
+ * 都是 ASAMA 上真踩过的：
+ *
+ *   1. 把方法摘下来再调（var fn = AT[name]; fn(...)）会丢掉注入绑定，
+ *      WebView 报 "Java bridge method can't be invoked on a non-injected object"。
+ *   2. 桥接按【实参个数】精确匹配，多传一个就报 "Method not found"，
+ *      所以每个方法的实参个数都要和 Java 侧形参一一对应。
+ */
+function call(name, a, b, c){
+  try {
+    switch(name){
+      case 'startOp':      return json(AT.startOp(a, b));
+      case 'presets':      return json(AT.presets());
+      case 'apiState':     return json(AT.apiState());
+      case 'saveApi':      return json(AT.saveApi(a, b, c));
+      case 'persona':      return json(AT.persona());
+      case 'savePersona':  return json(AT.savePersona(a));
+      case 'listChars':    return json(AT.listChars());
+      case 'saveChar':     return json(AT.saveChar(a));
+      case 'deleteChar':   return json(AT.deleteChar(a));
+      case 'listChats':    return json(AT.listChats(a));
+      case 'loadChat':     return json(AT.loadChat(a, b));
+      case 'saveChat':     return json(AT.saveChat(a, b, c));
+      case 'storeInfo':    return json(AT.storeInfo());
+      case 'searchState':  return json(AT.searchState());
+      case 'fetchUrl':     return json(AT.fetchUrl(a));
+      case 'exportText':   return json(AT.exportText(a, b));
+      case 'importText':   return json(AT.importText());
+      case 'saveSearchConfig': return json(AT.saveSearchConfig(a, b));
+      case 'imgState':     return json(AT.imgState());
+      case 'saveImgConfig':return json(AT.saveImgConfig(a, b, c));
+      case 'saveImage':    return json(AT.saveImage(a, b));
+      case 'readImage':    return json(AT.readImage(a));
+      case 'saveRef':      return json(AT.saveRef(a, b));
+      case 'listRefs':     return json(AT.listRefs());
+      case 'readRef':      return json(AT.readRef(a));
+      case 'deleteRef':    return json(AT.deleteRef(a));
+      default:
+        return { ok:false, error:'本机没有这个方法：' + name };
+    }
+  } catch(e){
+    return { ok:false, error:'和本机的桥接出错：' + e.message };
+  }
+}
+
+function json(s){
+  try { return JSON.parse(s); }
+  catch(e){ return { ok:false, error:'本机返回的内容读不懂' }; }
+}
+
+/** 发起一个后台操作。JS 线程不会被阻塞 —— 网络请求全在这条路上。 */
+function callOp(op, args, cb){
+  var r = call('startOp', op, JSON.stringify(args || []));
+  if(!r || !r.ok){
+    cb(r || { ok:false, error:'无法启动操作' });
+    return;
+  }
+  if(S.pending[r.id] !== undefined){
+    var j = S.pending[r.id];
+    delete S.pending[r.id];
+    cb(JSON.parse(j));
+    return;
+  }
+  S.pending[r.id] = cb;
+}
+
+window.__atDone = function(id, json){
+  var cb = S.pending[id];
+  if(cb === undefined){ S.pending[id] = json; return; }
+  delete S.pending[id];
+  try { cb(JSON.parse(json)); }
+  catch(e){ cb({ ok:false, error:'返回内容读不懂：' + e.message }); }
+};
+
+/* ---------------------------------------------------------------- 小工具 */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function toast(msg){
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(function(){ t.classList.remove('on'); }, 1800);
+}
+function showModal(title, body, isHtml){
+  $('modalTitle').textContent = title;
+  var b = $('modalBody');
+  if(isHtml){ b.innerHTML = body; b.className = 'html-view'; }
+  else { b.textContent = body; b.className = ''; }
+  b.scrollTop = 0;
+  $('modalFoot').innerHTML = '<button onclick="closeModal()">关闭</button>';
+  $('scrim').classList.add('on');
+}
+function closeModal(){ $('scrim').classList.remove('on'); }
+$('modalX').onclick = closeModal;
+$('scrim').onclick = function(e){ if(e.target === $('scrim')) closeModal(); };
+
+/* ---------------------------------------------------------------- 启动 */
+
+function boot(){
+  var p = call('presets');
+  S.presets = (p && p.ok !== false && p.length) ? p : PRESET_FALLBACK;
+  if(!Array.isArray(S.presets) || !S.presets.length){ S.presets = PRESET_FALLBACK; }
+
+  var a = call('apiState');
+  if(a && a.ok){ S.api = a; }
+
+  var st = call('settings');
+  if(st && typeof st === 'object'){
+    if(st.prefix) S.prefix = st.prefix;
+    if(st.params){
+      for(var k in st.params){ if(st.params[k] !== undefined) S.params[k] = st.params[k]; }
+    }
+    if(st.worldOn) S.worldOn = st.worldOn;
+    if(st.imgRef) S.imgRef = st.imgRef;
+    if(st.imgThreshold !== undefined) S.imgThreshold = st.imgThreshold;
+    if(st.imgTries !== undefined) S.imgTries = st.imgTries;
+    if(st.autoSearch !== undefined) S.autoSearch = !!st.autoSearch;
+  }
+
+  var pf = call('personas');
+  S.personas = Array.isArray(pf) ? pf : [];
+  S.persona = S.personas[0] || {};
+
+  var sq = call('searchState');
+  if(sq && sq.ok){ S.search = sq; }
+
+  var ig = call('imgState');
+  if(ig && ig.ok){ S.img = ig; }
+
+  var wl = call('listWorlds');
+  S.worlds = Array.isArray(wl) ? wl : [];
+
+  var cs = call('listChars'); S.chars = Array.isArray(cs) ? cs : [];
+
+  // 已经有配置就直接进聊天，否则走向导
+  if(S.api.base && S.api.hasKey && S.api.model && S.chars.length){
+    S.char = S.chars[0];
+    openChat();
+  } else {
+    S.screen = 'wizard';
+    S.step = 0;
+    render();
+  }
+}
+
+/* ---------------------------------------------------------------- 渲染 */
+
+function render(){
+  if(S.screen === 'wizard') return renderWizard();
+  if(S.screen === 'chat') return renderChat();
+}
+
+function setHeader(title, showBack, pill){
+  $('title').textContent = title;
+  $('btnBack').classList.toggle('hide', !showBack);
+  var p = $('connPill');
+  if(pill){ p.textContent = pill.text; p.className = 'pill ' + (pill.cls || ''); }
+  else { p.className = 'pill hide'; }
+}
+
+/* ---------- 向导 ---------- */
+
+function renderWizard(){
+  $('composer').classList.add('hide');
+  $('memline').classList.add('hide');
+  setHeader('初始设置', false, null);
+
+  var bars = '';
+  for(var i = 0; i < 4; i++){
+    bars += '<div class="step' + (i <= S.step ? ' on' : '') + '"></div>';
+  }
+
+  var h = '<div class="steps">' + bars + '</div>';
+  if(S.step === 0) h += stepApi();
+  if(S.step === 1) h += stepPersona();
+  if(S.step === 2) h += stepChar();
+  if(S.step === 3) h += stepDone();
+  $('main').innerHTML = h;
+  if(S.step === 0) bindApi();
+  if(S.step === 3) bindDone();
+}
+
+function stepApi(){
+  var opts = S.presets.map(function(p, i){
+    return '<option value="' + i + '">' + esc(p.name) + ' — ' + esc(p.base) + '</option>';
+  }).join('');
+  opts += '<option value="-1">自定义…</option>';
+  return ''
+  + '<h2 class="wtitle">连接模型</h2>'
+  + '<p class="wsub">AsamaTavern 不经过任何中转服务器，你的 Key 只存在这台手机上'
+  + '（加密保存），请求从手机直接发给你选的那家。</p>'
+  + '<label>服务商</label><select id="wPreset">' + opts + '</select>'
+  + '<label>接口地址</label>'
+  + '<input id="wBase" placeholder="https://api.deepseek.com/v1" autocapitalize="off" '
+  + 'autocorrect="off" spellcheck="false">'
+  + '<label>API Key</label>'
+  + '<input id="wKey" type="password" placeholder="粘贴你的 Key" autocapitalize="off" '
+  + 'autocorrect="off" spellcheck="false">'
+  + '<label>模型名</label>'
+  + '<input id="wModel" placeholder="deepseek-chat" autocapitalize="off" '
+  + 'autocorrect="off" spellcheck="false">'
+  + '<div class="row" style="margin-top:10px">'
+  + '<button id="wFetch" style="flex:1">拉取模型列表</button>'
+  + '<button id="wTest" class="primary" style="flex:1">测试连接</button>'
+  + '</div>'
+  + '<div id="wModels" style="margin-top:10px"></div>'
+  + '<div id="wOut" style="margin-top:12px"></div>'
+  + '<div style="height:20px"></div>'
+  + '<button class="primary wide" id="wNext" disabled>下一步</button>';
+}
+
+function bindApi(){
+  var sel = $('wPreset'), base = $('wBase'), key = $('wKey'), model = $('wModel');
+  base.value = S.api.base || '';
+  model.value = S.api.model || '';
+
+  function applyPreset(){
+    var i = parseInt(sel.value, 10);
+    if(i >= 0 && S.presets[i]){
+      base.value = S.presets[i].base;
+      model.value = S.presets[i].model;
+    }
+  }
+  sel.onchange = applyPreset;
+  if(!base.value){ applyPreset(); }
+
+  function useKey(cb){
+    if(!key.value.trim() && S.api.hasKey){
+      // 已经存过 key，界面上不显示明文；直接沿用
+      var r = call('saveApi', base.value, model.value, '');
+      cb(r);
+      return;
+    }
+    cb(call('saveApi', base.value, model.value, key.value));
+  }
+
+  $('wFetch').onclick = function(){
+    var b = $('wFetch');
+    b.disabled = true; b.textContent = '拉取中…';
+    useKey(function(){
+      callOp('listModels', [], function(r){
+        b.disabled = false; b.textContent = '拉取模型列表';
+        if(!r || !r.ok){
+          $('wOut').innerHTML = errBox(r && r.error);
+          return;
+        }
+        var list = r.models || [];
+        if(!list.length){
+          $('wModels').innerHTML = '<div class="muted">这家没返回可选模型，'
+            + '直接在下面手填模型名。</div>';
+          return;
+        }
+        $('wModels').innerHTML = '<label>可用模型（点一下填入）</label>'
+          + '<div style="display:flex;flex-wrap:wrap;gap:6px">'
+          + list.map(function(m){
+              return '<button style="padding:6px 11px;font-size:13px" '
+                + 'onclick="pickModel(\'' + esc(m).replace(/'/g, '') + '\')">'
+                + esc(m) + '</button>';
+            }).join('')
+          + '</div>';
+        $('wOut').innerHTML = okBox('拉到了 ' + list.length + ' 个模型');
+      });
+    });
+  };
+
+  $('wTest').onclick = function(){
+    var b = $('wTest');
+    b.disabled = true; b.textContent = '测试中…';
+    $('wOut').innerHTML = '';
+    useKey(function(sv){
+      if(!sv || !sv.ok){
+        b.disabled = false; b.textContent = '测试连接';
+        $('wOut').innerHTML = errBox(sv && sv.error);
+        return;
+      }
+      runSelfCheck($('wOut'), function(allOk){
+        b.disabled = false; b.textContent = '测试连接';
+        $('wNext').disabled = !allOk;
+      });
+    });
+  };
+
+  $('wNext').onclick = function(){ S.step = 1; render(); };
+}
+
+function pickModel(m){
+  $('wModel').value = m;
+  toast('已选 ' + m);
+}
+
+function okBox(t){
+  return '<div class="card" style="background:#E6F7F0"><div style="color:#2FB37A">'
+    + esc(t) + '</div></div>';
+}
+function errBox(t){
+  return '<div class="card" style="background:#FDECEC"><div style="color:#E5484D;'
+    + 'white-space:pre-wrap">' + esc(t || '未知错误') + '</div></div>';
+}
+
+/** 自检：连接 → 中文摘要。四步都过才允许进下一步。 */
+function runSelfCheck(box, done){
+  var rows = [
+    { id:'conn',   label:'接口地址', ic:'wait', tx:'检查中…' },
+    { id:'auth',   label:'API Key',  ic:'wait', tx:'检查中…' },
+    { id:'model',  label:'模型',     ic:'wait', tx:'检查中…' },
+    { id:'vision', label:'看图能力', ic:'wait', tx:'等待…' },
+    { id:'search', label:'联网搜索', ic:'wait', tx:'等待…' }
+  ];
+  function paint(){
+    box.innerHTML = '<div class="card">'
+      + '<h3>连接自检</h3>'
+      + rows.map(function(r){
+          return '<div class="check"><span class="ic ' + r.ic + '">'
+            + ({ok:'✓',err:'✕',wait:'◐',warn:'!'}[r.ic] || '○')
+            + '</span><span class="tx"><b>' + esc(r.label) + '</b> '
+            + esc(r.tx) + '</span></div>';
+        }).join('')
+      + '</div>';
+  }
+  paint();
+
+  rows[0].ic = 'ok';
+  rows[0].tx = $('wBase').value.trim();
+  paint();
+
+  log('自检开始：' + $('wBase').value.trim() + ' / ' + $('wModel').value.trim());
+  callOp('testConnection', [], function(r){
+    if(!r || !r.ok){
+      rows[0].ic = 'err';
+      rows[0].tx = '连不上';
+      rows[1].ic = 'err'; rows[2].ic = 'err';
+      rows[1].tx = '—'; rows[2].tx = '—';
+      paint();
+      box.innerHTML += errBox(r && r.error);
+      done(false);
+      return;
+    }
+    rows[0].ic = 'ok';
+    rows[0].tx = '通了 · 往返 ' + r.ms + 'ms';
+    rows[1].ic = 'ok';
+    rows[1].tx = '有效';
+    rows[2].ic = 'ok';
+    rows[2].tx = '实际使用 ' + esc(r.model || $('wModel').value)
+      + (r.text ? (' · 回复「' + esc(r.text.slice(0, 20)) + '」') : '');
+    paint();
+
+    // 看图能力：不只看回答，还看 prompt_tokens —— 纯文本模型只有几十，
+    // 真送图进去会跳到两百左右
+    var pt = r.promptTokens || 0;
+    rows[3].ic = pt > 120 ? 'ok' : 'warn';
+    rows[3].tx = pt > 120
+      ? ('疑似支持（本次 ' + pt + ' prompt token）')
+      : ('当前模型可能不支持看图（' + pt + ' token）');
+
+    // 联网：配了就算就绪
+    var sq = call('searchState');
+    if(sq && sq.ok && sq.hasKey){
+      rows[4].ic = 'ok';
+      rows[4].tx = '已配置 · ' + (sq.base || '');
+    } else {
+      rows[4].ic = 'warn';
+      rows[4].tx = '还没配（不影响聊天）';
+    }
+    paint();
+
+    box.innerHTML += '<div class="card" style="background:#E6F7F0">'
+      + '<div style="color:#2FB37A">可以了，点下一步继续。</div>'
+      + '<div class="muted" style="margin-top:4px">用量：输入 '
+      + pt + ' · 输出 ' + (r.completionTokens || 0)
+      + '</div></div>';
+    done(true);
+  });
+}
+
+function stepPersona(){
+  var p = S.persona || {};
+  return ''
+  + '<h2 class="wtitle">你是谁</h2>'
+  + '<p class="wsub">角色扮演里的"我"。只填名字也能开始，其它以后随时能补。</p>'
+  + '<label>名字</label><input id="pName" value="' + esc(p.name || '') + '" '
+  + 'placeholder="你的名字">'
+  + '<label>设定 / 身份</label>'
+  + '<textarea id="pDesc" placeholder="例如：25 岁，公司白领，住在锦澜公寓 505 室">'
+  + esc(p.desc || '') + '</textarea>'
+  + '<div style="height:20px"></div>'
+  + '<div class="row">'
+  + '<button style="flex:1" onclick="S.step=0;render()">上一步</button>'
+  + '<button class="primary" style="flex:2" onclick="savePersonaNext()">下一步</button>'
+  + '</div>';
+}
+
+function savePersonaNext(){
+  S.persona = { name: $('pName').value.trim(), desc: $('pDesc').value.trim() };
+  call('savePersona', JSON.stringify(S.persona));
+  S.step = 2; render();
+}
+
+function stepChar(){
+  var c = S.char || {};
+  return ''
+  + '<h2 class="wtitle">你在和谁对话</h2>'
+  + '<p class="wsub">填角色卡。有现成的酒馆角色卡（V2 的 .json）'
+  + '也可以之后从「设定」里导入。</p>'
+  + '<label>名字</label><input id="cName" value="' + esc(c.name || '') + '" '
+  + 'placeholder="例如：林美月">'
+  + '<label>设定 / 性格</label>'
+  + '<textarea id="cDesc" placeholder="她是谁、什么性格、怎么说话">'
+  + esc(c.desc || '') + '</textarea>'
+  + '<label>外貌</label>'
+  + '<textarea id="cLook" style="min-height:70px" '
+  + 'placeholder="身高、发色、瞳色、常见穿着 —— 生图时会用到">'
+  + esc(c.look || '') + '</textarea>'
+  + '<label>开场白（可选）</label>'
+  + '<textarea id="cFirst" style="min-height:70px" '
+  + 'placeholder="聊天开始时她说的第一句话">' + esc(c.first || '') + '</textarea>'
+  + '<div style="height:20px"></div>'
+  + '<div class="row">'
+  + '<button style="flex:1" onclick="S.step=1;render()">上一步</button>'
+  + '<button class="primary" style="flex:2" onclick="saveCharNext()">下一步</button>'
+  + '</div>';
+}
+
+function saveCharNext(){
+  var name = $('cName').value.trim();
+  if(!name){ toast('角色名不能空着'); return; }
+  S.char = {
+    id: (S.editingChar && S.editingChar.id) || ('c' + Date.now()),
+    name: name,
+    desc: $('cDesc').value.trim(),
+    look: $('cLook').value.trim(),
+    first: $('cFirst').value.trim()
+  };
+  call('saveChar', JSON.stringify(S.char));
+  S.editingChar = null;
+  var cs = call('listChars');
+  if(Array.isArray(cs)) S.chars = cs;
+  S.step = 3; render();
+}
+
+function stepDone(){
+  var c = S.char || {};
+  return ''
+  + '<h2 class="wtitle">可以开始了</h2>'
+  + '<p class="wsub">设置都存在这台手机上。以后想改，点右上角的齿轮。</p>'
+  + '<div class="card">'
+  + '<h3>' + esc(c.name || '角色') + '</h3>'
+  + '<div class="muted">' + esc((c.desc || '（没写设定）').slice(0, 90)) + '</div>'
+  + '</div>'
+  + '<div class="card">'
+  + '<h3>模型</h3>'
+  + '<div class="muted">' + esc(S.api.model || '（未设置）')
+  + ' · ' + esc(S.api.base || '') + '</div>'
+  + '</div>'
+  + '<button class="primary wide" id="wGo">进入聊天</button>';
+}
+
+function bindDone(){
+  $('wGo').onclick = function(){
+    var a = call('apiState');
+    if(a && a.ok){ S.api = a; }
+    openChat();
+  };
+}
+
+/* ---------- 聊天 ---------- */
+
+function openChat(){
+  S.screen = 'chat';
+  var cs = call('listChats', S.char.id);
+  var list = Array.isArray(cs) ? cs : [];
+  S.chatId = list.length ? list[0].id : 'main';
+  var raw = call('loadChat', S.char.id, S.chatId);
+  S.messages = (raw && raw.messages) ? raw.messages : [];
+  if(!S.messages.length && S.char.first){
+    S.messages.push({ isUser:false, mes:S.char.first });
+    persist();
+  }
+  renderChat();
+}
+
+function renderChat(){
+  setHeader(S.char.name, true, { text:'切换', cls:'' });
+  $('connPill').onclick = function(){ switchChar(); };
+  $('connPill').style.cursor = 'pointer';
+  $('memline').classList.remove('hide');
+  updateStatusLine();
+  $('composer').classList.remove('hide');
+  updateStatusLine();
+  drawBubbles();
+}
+
+function drawBubbles(){
+  updateStatusLine();
+  var h = '<div class="bubbles">';
+  S.messages.forEach(function(m, i){
+    var me = !!m.isUser;
+    h += '<div class="b' + (me ? ' me' : '') + '"><div class="who">'
+      + esc(me ? ((S.persona && S.persona.name) || '我') : S.char.name) + '</div>'
+      + (m.reasoning
+          ? ('<details class="thinkbox"><summary>💭 思考过程</summary>'
+             + '<div>' + esc(m.reasoning).replace(/\n/g, '<br>') + '</div></details>')
+          : '')
+      + '<div class="body">' + esc(m.mes).replace(/\n/g, '<br>') + '</div>'
+      + '<div class="msgimg" id="mi' + i + '" style="display:none"></div>'
+      + '<div class="acts">';
+    if(m.imgs && m.imgs.length){
+      h += '<button onclick="toggleImgs(' + i + ')">🖼 图片 ' + m.imgs.length + '</button>';
+    }
+    if(!me){
+      h += '<button onclick="genImage(' + i + ')">🎨 生成图片</button>';
+    }
+    h += '</div></div>';
+  });
+  if(S.searchNote){
+    h += '<div class="bubbles"><div class="b her"><div class="who">正在联网</div>'
+      + '<div class="body">搜索「' + esc(S.searchNote) + '」…</div></div></div>';
+  }
+  h += '</div>';
+  $('main').innerHTML = h;
+  $('main').scrollTop = $('main').scrollHeight;
+}
+
+function persist(){
+  call('saveChat', S.char.id, S.chatId,
+       JSON.stringify({ messages: S.messages }));
+}
+
+/**
+ * 扫世界书：最近几条消息里出现关键词，就把对应条目注入。
+ * 常驻条目（constant）无条件注入。
+ */
+function worldHits(){
+  var recent = S.messages.slice(-8).map(function(m){ return m.mes || ''; }).join('\n');
+  var out = [];
+  S.worlds.forEach(function(w){
+    if(S.worldOn[w.id] === false) return;
+    (w.entries || []).forEach(function(e){
+      if(e.disabled) return;
+      var keys = (e.keys || []).filter(function(k){ return k && k.trim(); });
+      var hit = !!e.constant;
+      if(!hit && keys.length){
+        hit = keys.some(function(k){ return recent.indexOf(k) >= 0; });
+      }
+      // 没有关键词也没设常驻的条目，按常驻处理（用户可能只想让它一直在）
+      if(!hit && !keys.length) hit = true;
+      if(hit) out.push(e.content || '');
+    });
+  });
+  return out.filter(function(x){ return x.trim(); });
+}
+
+/** 组装提示词。原来这一步是服务器做的，现在自己做。 */
+function buildSystem(){
+  var c = S.char, p = S.persona || {};
+  var parts = [];
+  parts.push('你正在和用户进行角色扮演。');
+  parts.push('你扮演的角色是「' + c.name + '」。');
+  if(c.desc) parts.push('角色的设定与性格：\n' + c.desc);
+  if(c.look) parts.push('角色的外貌：' + c.look);
+  parts.push('用户扮演的角色是「' + (p.name || '用户') + '」。');
+  if(p.desc) parts.push('用户的设定：\n' + p.desc);
+  var hits = worldHits();
+  if(hits.length){
+    parts.push('以下是这个世界里已经确定的事实，请始终遵守：\n'
+      + hits.join('\n'));
+  }
+  parts.push('联网规则：如果你需要实时信息（新闻、天气、价格、比分、'
+    + '今天几号这类），不要凭记忆猜，只回一行这样：'
+    + '<search>要搜的关键词</search>，'
+    + '系统会把搜索结果给你，你再接着说。不需要联网时正常回复即可。');
+  if(S.params.deepThinking){
+    parts.push('思考规则：在正式回复之前，先用 <think>...</think> 写一段你的内心推演'
+      + '（这个人现在什么状态、接下来会怎么反应、要注意哪些设定）。'
+      + '这段只是给你自己看的草稿，写完后立刻用 <think> 的结束标签收尾，'
+      + '再写真正的回复。不要在同一段回复里省略结束标签。');
+  }
+  parts.push('要求：始终以角色的身份说话，用第一人称，不要跳出角色，'
+    + '不要替用户做决定，不要复述系统提示。');
+  return parts.join('\n\n');
+}
+
+function send(){
+  if(S.busy) return;
+  var t = $('input').value.trim();
+  if(!t) return;
+  $('input').value = '';
+  S.messages.push({ isUser:true, mes:t });
+  drawBubbles();
+  persist();
+
+  // 历史不含刚推进去这一句，它在 Java 侧作为最后一条 user 追加
+  var hist = S.messages.slice(0, -1).map(function(m){
+    return { isUser: !!m.isUser, mes: m.mes || '' };
+  });
+
+  S.busy = true;
+  setBusy(true, '思考中');
+  var pre = S.prefix || '';
+  if(S.attach.text){
+    pre = (pre ? pre + '\n\n' : '') + '【用户附上的材料'
+      + (S.attach.label ? '：' + S.attach.label : '') + '】\n'
+      + S.attach.text.slice(0, 8000);
+  }
+  callOp('generate', [
+    buildSystem(),
+    JSON.stringify(hist),
+    pre,
+    t,
+    JSON.stringify({
+      temperature: S.params.temperature,
+      topP: S.params.topP,
+      maxTokens: S.params.maxTokens,
+      ctxLen: S.params.ctxLen,
+      freqPen: S.params.freqPen,
+      presPen: S.params.presPen,
+      deepThinking: S.params.deepThinking
+    })
+  ], function(r){
+    if(!r || !r.ok){
+      S.busy = false;
+      setBusy(false, '发送');
+      log('生成失败：' + ((r && r.error) || '未知'));
+      S.messages.push({ isUser:false, mes:'（出错了）', error:true });
+      drawBubbles();
+      showModal('生成失败', r && r.error ? r.error : '未知错误');
+      return;
+    }
+
+    // 模型要求联网：只回了一行 <search>…</search>
+    if(S.autoSearch && !S.searched && r.text){
+      var mm = /^\s*<search>([\s\S]*?)<\/search>\s*$/.exec(r.text.trim());
+      if(mm && mm[1].trim()){
+        S.searched = true;
+        var q = mm[1].trim();
+        setBusy(true, '搜索中');
+        S.searchNote = q;
+        drawBubbles();
+        callOp('search', [q], function(sr){
+          S.searchNote = '';
+          if(!sr || !sr.ok){
+            S.busy = false; setBusy(false, '发送');
+            S.messages.push({ isUser:false,
+              mes:'（想联网查一下「' + q + '」，但是没查成）' });
+            drawBubbles(); persist();
+            showModal('联网失败', (sr && sr.error) || '未知错误');
+            return;
+          }
+          S.searchResult = { q:q, text:sr.text, sources:sr.sources };
+          S.prefix = (S.prefix ? S.prefix + '\n\n' : '')
+            + '【刚刚联网查到的资料】\n' + sr.text;
+          S.oneShotPrefix = true;
+          send();
+        });
+        return;
+      }
+    }
+
+    S.busy = false;
+    setBusy(false, '发送');
+    S.searched = false;
+    if(S.oneShotPrefix){
+      // 这一轮用完就把搜到的资料摘掉，别一直挂着
+      S.prefix = S.prefix.replace(/\n\n【刚刚联网查到的资料】[\s\S]*$/, '');
+      S.oneShotPrefix = false;
+    }
+    if(S.searchResult){
+      S.lastSearch = S.searchResult;
+      S.searchResult = null;
+    }
+    clearAttach();
+    var split = splitThinking(r.text || '', r.reasoning || '');
+    S.messages.push({ isUser:false, mes:split.body || '（空回复）',
+                      reasoning:split.think });
+    drawBubbles();
+    persist();
+  });
+}
+
+function updateStatusLine(){
+  var el = $('memText');
+  if(S.searchNote){
+    el.textContent = '联网搜索：' + S.searchNote;
+    return;
+  }
+  if(S.lastSearch){
+    el.innerHTML = '已联网 · ' + esc(S.lastSearch.q) + ' · '
+      + (S.lastSearch.sources || 0) + ' 条来源';
+    return;
+  }
+  var n = palace().entries.length;
+  el.innerHTML = '记忆 ' + n + ' 条 · 已用 ' + memPct() + '% · 消息 '
+    + S.messages.length + ' 条';
+}
+
+function setBusy(on, label){
+  var b = $('btnSend');
+  var c = $('btnCont');
+  b.disabled = !!on;
+  b.textContent = label || (on ? '…' : '发送');
+  // 两个按钮一起管：只清一个的话另一个会永远停在禁用态 ——
+  // 6.8 上就是这样，表现成"续写只能用一次"
+  if(c){
+    c.disabled = !!on;
+    c.textContent = '续写';
+  }
+}
+
+$('btnSend').onclick = send;
+$('input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){
+    e.preventDefault(); send();
+  }
+});
+$('input').addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = Math.min(130, this.scrollHeight) + 'px';
+});
+$('btnBack').onclick = function(){
+  S.screen = 'wizard'; S.step = 0; render();
+};
+$('btnGear').onclick = function(){ showSettings(); };
+$('btnPlus').onclick = function(){ openAttach(); };
+$('btnCont').onclick = continueLast;
+log('界面就绪');
+
+$('btnMem').onclick = function(){
+  if(!palace().entries.length && S.messages.length < 4){
+    openPalace();
+    return;
+  }
+  showModal('记忆宫殿',
+      '<div class="muted">共 ' + palace().entries.length + ' 条，已用 '
+    + memPct() + '%（约 ' + memTokens() + ' / ' + MEM_LIMIT + ' token）。</div>',
+      true);
+  $('modalFoot').innerHTML =
+      '<button onclick="closeModal();openPalace()">查看条目</button>'
+    + '<button class="primary" onclick="closeModal();distill()">立即归纳</button>';
+};
+
+$('btnSearch').onclick = function(){
+  if(!S.lastSearch){
+    showModal('联网搜索',
+      '还没有搜过。\n\n'
+      + '联网是自动的：你问到需要实时信息的事（新闻、天气、今天几号），'
+      + '模型会自己发起搜索，搜完再接着回答。\n\n'
+      + '去「设置 → 联网」填好地址和 Key 就能用。');
+    return;
+  }
+  showModal('联网结果 · ' + S.lastSearch.q,
+      '来源 ' + (S.lastSearch.sources || 0) + ' 条\n\n' + S.lastSearch.text);
+};
+
+function showSettings(){
+  var a = S.api;
+  var p = S.params;
+  showModal('设置',
+    '<div class="card"><h3>模型</h3>'
+  + '<div class="muted">地址：' + esc(a.base || '（没填）') + '<br>'
+  + '模型：' + esc(a.model || '（没填）') + '<br>'
+  + 'Key：' + esc(a.hasKey ? ('已保存 ' + (a.keyHint || '')) : '（没填）') + '</div>'
+  + '<div style="margin-top:10px"><button onclick="closeModal();S.screen=\'wizard\';'
+  + 'S.step=0;render()">重新配置模型</button></div></div>'
+
+  + '<div class="card"><h3>生成参数</h3>'
+  + '<div class="grid2">'
+  + '<div><label>温度</label><input id="sTemp" value="' + p.temperature + '"></div>'
+  + '<div><label>top_p</label><input id="sTopP" value="' + p.topP + '"></div>'
+  + '</div>'
+  + '<div class="grid2">'
+  + '<div><label>最大回复长度</label><input id="sMax" value="' + p.maxTokens + '"></div>'
+  + '<div><label>上下文条数</label><input id="sCtx" value="' + p.ctxLen + '"></div>'
+  + '</div>'
+  + '<div class="grid2">'
+  + '<div><label>频率惩罚</label><input id="sFreq" value="' + p.freqPen + '"></div>'
+  + '<div><label>存在惩罚</label><input id="sPres" value="' + p.presPen + '"></div>'
+  + '</div>'
+  + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px">'
+  + '<input type="checkbox" id="sThink" style="width:auto"'
+  + (p.deepThinking ? ' checked' : '') + '> 深度思考</label>'
+  + '<div class="muted" style="margin-top:6px">温度建议别超过 1.3，'
+  + '太高会开始说胡话。</div>'
+  + '<div style="margin-top:10px"><button class="primary" '
+  + 'onclick="saveParams()">保存参数</button></div></div>'
+
+  + '<div class="card"><h3>前置词</h3>'
+  + '<div class="muted">这段文字会拼在你每一次发言的前面一起发给 AI，'
+  + '用来提醒它场景、状态或规则。你自己在聊天框里看不到它。</div>'
+  + '<textarea id="sPrefix" style="margin-top:8px;min-height:90px" '
+  + 'placeholder="例如：现在是晚上，我们在客厅">' + esc(S.prefix) + '</textarea>'
+  + '<div style="margin-top:10px"><button class="primary" '
+  + 'onclick="savePrefix()">保存前置词</button></div></div>'
+
+  + '<div class="card"><h3>日志导出</h3>'
+  + '<div class="muted">把配置、数据统计和界面日志打包成一个 txt。'
+  + '排错时发这个比截图有用。导出走系统文件选择器，不需要存储权限。</div>'
+  + '<div class="row" style="margin-top:10px">'
+  + '<button class="primary" onclick="exportLog()">导出日志</button>'
+  + '<button onclick="closeModal();previewLog()">先看一眼</button>'
+  + '</div></div>'
+
+  + '<div class="card"><h3>身份与角色</h3>'
+  + '<div class="muted">我：' + esc((S.persona && S.persona.name) || '（未设置）')
+  + ' · 角色：' + esc(S.char ? S.char.name : '')
+  + ' · 共 ' + S.personas.length + ' 个身份 / ' + S.chars.length + ' 个角色</div>'
+  + '<div class="row" style="margin-top:10px">'
+  + '<button onclick="closeModal();switchPersona()">切换身份</button>'
+  + '<button onclick="closeModal();switchChar()">切换角色</button>'
+  + '</div></div>'
+
+  + '<div class="card"><h3>联网搜索</h3>'
+  + '<div class="muted">' + esc(S.search.base || '（没填）') + ' · '
+  + (S.search.hasKey ? 'Key 已保存' : '还没填 Key') + '<br>'
+  + '模型判断需要实时信息时会自己去搜，搜完接着回答。'
+  + '不需要联网的对话一次都不搜。</div>'
+  + '<label style="display:flex;align-items:center;gap:8px;margin-top:10px">'
+  + '<input type="checkbox" id="sAuto" style="width:auto"'
+  + (S.autoSearch ? ' checked' : '') + '> 允许自动联网</label>'
+  + '<div style="margin-top:10px"><button onclick="closeModal();openSearchSettings()">'
+  + '配置联网</button></div></div>'
+
+  + '<div class="card"><h3>画图</h3>'
+  + '<div class="muted">' + esc(S.img.model || 'image-01') + ' · '
+  + (S.img.hasKey ? 'Key 已保存' : '还没填 Key')
+  + (S.imgRef ? (' · 参考图 ' + esc(S.imgRef)) : ' · 没有参考图') + '</div>'
+  + '<div style="margin-top:10px"><button onclick="closeModal();openImgSettings()">'
+  + '配置画图</button></div></div>'
+
+  + '<div class="card"><h3>世界书</h3>'
+  + '<div class="muted">共 ' + S.worlds.length + ' 本，启用 '
+  + S.worlds.filter(function(w){ return S.worldOn[w.id] !== false; }).length + ' 本。'
+  + '关键词在最近 8 条消息里出现时，对应条目会注入给 AI。</div>'
+  + '<div style="margin-top:10px"><button onclick="closeModal();openWorlds()">'
+  + '管理世界书</button></div></div>'
+
+  + '<div class="card"><h3>聊天记录</h3>'
+  + '<div class="muted">以 .txt 导出，可以再导入回来。</div>'
+  + '<div class="row" style="margin-top:10px">'
+  + '<button onclick="exportChatTxt()">导出当前聊天</button>'
+  + '<button onclick="importChatTxt()">导入聊天</button>'
+  + '</div></div>', true);
+}
+
+function savePrefix(){
+  S.prefix = $('sPrefix').value;
+  persistSettings();
+  closeModal(); toast('前置词已保存');
+}
+
+function persistSettings(){
+  call('saveSettings', JSON.stringify({
+    prefix: S.prefix,
+    params: S.params,
+    worldOn: S.worldOn,
+    imgRef: S.imgRef,
+    imgThreshold: S.imgThreshold,
+    imgTries: S.imgTries,
+    autoSearch: S.autoSearch,
+    activePersona: S.persona ? S.persona.id : '',
+    activeChar: S.char ? S.char.id : ''
+  }));
+}
+
+
+/**
+ * 把思考内容从正文里剥出来。
+ *
+ * 这个后端不返回 reasoning_content，所以思考是靠提示词让它写在
+ * <think>…</think> 里的。万一模型忘了收尾，就取到结尾为止，别把
+ * 半截思考当正文显示出来。
+ */
+function splitThinking(text, nativeReasoning){
+  var t = String(text || '');
+  var think = nativeReasoning || '';
+  var body = t;
+  var m = /<think>([\s\S]*?)<\/think>/.exec(t);
+  if(m){
+    think = (think ? think + '\n' : '') + m[1].trim();
+    body = t.replace(m[0], '').trim();
+  } else if(t.indexOf('<think>') >= 0){
+    var i = t.indexOf('<think>');
+    var tail = t.slice(i + 7);
+    think = (think ? think + '\n' : '') + tail.trim();
+    body = t.slice(0, i).trim();
+  }
+  return { body:body, think:think };
+}
+
+/* ---------------- 日志导出 ---------------- */
+
+function buildLog(){
+  var L = [];
+  L.push('AsamaTavern 运行日志');
+  L.push('时间：' + new Date().toLocaleString());
+  L.push('版本：1.8');
+  L.push('');
+  L.push('--- 配置 ---');
+  L.push('聊天地址：' + (S.api.base || '(未配置)'));
+  L.push('聊天模型：' + (S.api.model || '(未配置)'));
+  L.push('聊天 Key：' + (S.api.hasKey ? ('已保存 ' + S.api.keyHint) : '(未配置)'));
+  L.push('画图地址：' + (S.img.base || '') + ' / ' + (S.img.model || ''));
+  L.push('画图 Key：' + (S.img.hasKey ? '已保存' : '(未配置)'));
+  L.push('搜索地址：' + (S.search.base || '') + ' / '
+    + (S.search.hasKey ? 'Key 已保存' : '未配置'));
+  L.push('');
+  L.push('--- 生成参数 ---');
+  for(var k in S.params){ L.push('  ' + k + ' = ' + S.params[k]); }
+  L.push('  自动联网 = ' + S.autoSearch);
+  L.push('  前置词 = ' + (S.prefix ? (S.prefix.length + ' 字') : '（空）'));
+  L.push('');
+  L.push('--- 数据 ---');
+  L.push('身份 ' + S.personas.length + ' 个，当前：'
+    + ((S.persona && S.persona.name) || ''));
+  L.push('角色 ' + S.chars.length + ' 个，当前：' + (S.char ? S.char.name : ''));
+  L.push('消息 ' + S.messages.length + ' 条');
+  L.push('世界书 ' + S.worlds.length + ' 本');
+  L.push('记忆 ' + palace().entries.length + ' 条，约 ' + memTokens()
+    + ' / ' + MEM_LIMIT + ' token');
+  L.push('附件：' + attachSummary());
+  var si = call('storeInfo');
+  L.push('存储：' + JSON.stringify(si));
+  L.push('');
+  L.push('--- 界面日志（最近 ' + LOG.length + ' 条）---');
+  LOG.forEach(function(x){ L.push(x); });
+  return L.join('\n');
+}
+
+function exportLog(){
+  var txt = buildLog();
+  var nm = 'asamatavern-log-' + new Date().toISOString().slice(0, 16)
+    .replace(/[:T]/g, '') + '.txt';
+  call('exportText', nm, txt);
+  log('日志导出：' + nm + '（' + txt.length + ' 字）');
+}
+
+
+/* ============================================================
+   续写：接着最后一条角色消息往下写
+   ============================================================ */
+
+function continueLast(){
+  if(S.busy){ toast('正在忙'); return; }
+  var last = -1;
+  for(var i = S.messages.length - 1; i >= 0; i--){
+    if(!S.messages[i].isUser){ last = i; break; }
+  }
+  if(last < 0){ toast('还没有可续写的内容'); return; }
+
+  var hist = S.messages.map(function(m){
+    return { isUser: !!m.isUser, mes: m.mes || '' };
+  });
+
+  S.busy = true;
+  setBusy(true, '续写中');
+  log('续写：从第 ' + last + ' 条接下去');
+
+  callOp('generate', [
+    buildSystem(),
+    JSON.stringify(hist),
+    '',
+    // 一定要带这句：提示词以 assistant 结尾时，后端经常直接返回空
+    '（请接着上面那段继续写下去。不要重复已经写过的内容，'
+      + '直接从断掉的地方往下接，保持同样的语气和节奏。）',
+    JSON.stringify({
+      temperature: S.params.temperature,
+      topP: S.params.topP,
+      maxTokens: S.params.maxTokens,
+      ctxLen: S.params.ctxLen,
+      freqPen: S.params.freqPen,
+      presPen: S.params.presPen,
+      deepThinking: S.params.deepThinking
+    })
+  ], function(r){
+    S.busy = false;
+    setBusy(false, '发送');
+    if(!r || !r.ok){
+      log('续写失败：' + ((r && r.error) || '未知'));
+      showModal('续写失败', (r && r.error) || '未知错误');
+      return;
+    }
+    var split = splitThinking(r.text || '', r.reasoning || '');
+    if(!split.body){
+      showModal('续写没出内容', '模型这次什么都没写。再点一次试试。');
+      return;
+    }
+    // 接在原来那条后面，而不是新开一条
+    var m = S.messages[last];
+    m.mes = (m.mes || '') + '\n' + split.body;
+    if(split.think){
+      m.reasoning = (m.reasoning ? m.reasoning + '\n' : '') + split.think;
+    }
+    drawBubbles();
+    persist();
+  });
+}
+
+/* ============================================================
+   画图流水线：生成 → 与参考图比对 → 不达标重画 → 全部摆出来
+   ============================================================ */
+
+var SIM_DEFAULT = 60;
+var TRIES_DEFAULT = 4;
+
+function simThreshold(){
+  var v = parseInt(S.imgThreshold, 10);
+  if(isNaN(v) || v < 0 || v > 100) return SIM_DEFAULT;
+  return v;
+}
+function maxTries(){
+  var v = parseInt(S.imgTries, 10);
+  if(isNaN(v) || v < 1 || v > 10) return TRIES_DEFAULT;
+  return v;
+}
+
+function runPipeline(idx, prompt, refData){
+  var attempt = 0;
+  var tried = [];
+
+  function once(){
+    attempt++;
+    setImgProgress(attempt, tried.length, '第 ' + attempt + ' 次生成中…');
+    callOp('generateImage', [prompt, refData], function(r){
+      if(!r || !r.ok){
+        finishPipeline(idx, tried, (r && r.error) || '生成失败');
+        return;
+      }
+      if(!refData){
+        // 没有参考图，无从比对，直接收下并说明原因
+        tried.push({ img:r.image, sim:-1, why:'没有参考图，没能验收', n:attempt });
+        finishPipeline(idx, tried, '');
+        return;
+      }
+      setImgProgress(attempt, tried.length, '正在与参考图比对…');
+      callOp('judgeImage', [refData, r.image, '{}'], function(j){
+        var sim = (j && j.ok) ? j.similarity : -1;
+        var why = (j && j.ok) ? (j.reason || '') : ((j && j.error) || '评判失败');
+        tried.push({ img:r.image, sim:sim, why:why, n:attempt });
+        log('画图第 ' + attempt + ' 次：相似度 ' + sim + '% ' + why);
+
+        if(sim >= 0 && sim >= simThreshold()){
+          finishPipeline(idx, tried, '');
+          return;
+        }
+        if(attempt >= maxTries()){
+          finishPipeline(idx, tried, '');
+          return;
+        }
+        setImgProgress(attempt, tried.length,
+          '相似度只有 ' + (sim >= 0 ? sim + '%' : '未判定') + '，重画…');
+        setTimeout(once, 300);
+      });
+    });
+  }
+  once();
+}
+
+function setImgProgress(attempt, done, note){
+  var pct = Math.min(96, Math.round(attempt / (maxTries() + 1) * 100));
+  var f = $('igFill');
+  if(f) f.style.width = pct + '%';
+  var n = $('igNote');
+  if(n) n.textContent = note;
+  var rows = '';
+  for(var i = 0; i < done; i++){ rows += '✓ '; }
+  var t = $('igTried');
+  if(t) t.textContent = rows ? ('已完成 ' + done + ' 张') : '';
+}
+
+/** 全部跑完才给结果；达标的自动留下，其余等你挑。 */
+function finishPipeline(idx, tried, err){
+  S.busy = false;
+  if(!tried.length){
+    showModal('画图失败', err || '一张都没出来。');
+    return;
+  }
+  var best = null;
+  tried.forEach(function(x){
+    if(x.sim < 0) return;
+    if(!best || x.sim > best.sim) best = x;
+  });
+  var pick = best || tried[tried.length - 1];
+
+  // 达标的（或没有参考图时的最后一张）自动挂到消息下面
+  attachImg(idx, pick);
+
+  var th = simThreshold();
+  var rows = tried.map(function(x, k){
+    var badge = (x.sim >= 0)
+      ? ('<span class="' + (x.sim >= th ? 'okc' : 'warnc') + '">' + x.sim + '%</span>')
+      : '<span class="warnc">未验收</span>';
+    return '<div class="tryrow">'
+      + '<img src="' + x.img + '" onclick="viewTry(' + k + ')">'
+      + '<div class="trymeta"><b>第 ' + x.n + ' 张</b> ' + badge
+      + '<div class="muted">' + esc(String(x.why || '').slice(0, 70)) + '</div>'
+      + '<div style="margin-top:6px">'
+      + '<button onclick="keepTry(' + idx + ',' + k + ')">保留</button> '
+      + '<button onclick="dropTry(' + k + ')">删除</button>'
+      + '</div></div></div>';
+  }).join('');
+
+  S.tried = tried;
+  S.triedFor = idx;
+  showModal('生成结果（' + tried.length + ' 张）',
+      '<div class="ed">'
+    + '<div class="muted">达标线 ' + th + '%。最合适的一张已自动挂在消息下面，'
+    + '其余点开看过再决定。</div>'
+    + rows + '</div>', true);
+  $('modalFoot').innerHTML =
+      '<button onclick="closeModal()">关掉</button>'
+    + '<button onclick="closeModal();genImage(' + idx + ')">再画一轮</button>'
+    + '<button class="primary" onclick="keepAllTries()">全部保留</button>';
+}
+
+function viewTry(k){
+  var x = (S.tried || [])[k];
+  if(!x) return;
+  var th = simThreshold();
+  showModal('第 ' + x.n + ' 张',
+      '<div class="ed"><div class="muted">与参考图相似度 '
+    + (x.sim >= 0 ? (x.sim + '%') : '未能判定')
+    + (x.why ? (' · ' + esc(x.why)) : '') + '</div>'
+    + '<img src="' + x.img + '" style="width:100%;border-radius:12px;display:block">'
+    + '</div>', true);
+  $('modalFoot').innerHTML =
+      '<button onclick="closeModal();showGallery()">返回</button>'
+    + '<button onclick="closeModal();keepTry(S.triedFor,' + k + ')">保留这张</button>';
+}
+
+function showGallery(){
+  var tried = S.tried || [];
+  var th = simThreshold();
+  var rows = tried.map(function(x, k){
+    return '<div class="tryrow"><img src="' + x.img + '" onclick="viewTry(' + k + ')">'
+      + '<div class="trymeta"><b>第 ' + x.n + ' 张</b> '
+      + (x.sim >= 0 ? (x.sim + '%') : '未验收')
+      + '<div class="muted">' + esc(String(x.why || '').slice(0, 70)) + '</div>'
+      + '<div style="margin-top:6px">'
+      + '<button onclick="keepTry(' + S.triedFor + ',' + k + ')">保留</button> '
+      + '<button onclick="dropTry(' + k + ')">删除</button>'
+      + '</div></div></div>';
+  }).join('');
+  showModal('生成结果（' + tried.length + ' 张）', '<div class="ed">' + rows + '</div>', true);
+  $('modalFoot').innerHTML = '<button class="primary" onclick="closeModal()">关掉</button>';
+}
+
+/** 把一张图挂到消息下面（折叠）。 */
+function attachImg(idx, x){
+  var name = 'm' + idx + '-' + Date.now() + '.jpg';
+  var sv = call('saveImage', name, x.img);
+  if(!sv || !sv.ok){ S.imgCache[name] = x.img; toast('图画好了但存不下来'); return; }
+  var m = S.messages[idx];
+  m.imgs = (m.imgs || []).concat([name]);
+  m.imgsim = m.imgsim || {};
+  m.imgsim[name] = (x.sim >= 0 ? x.sim : null);
+  persist();
+  drawBubbles();
+}
+
+function keepTry(idx, k){
+  var x = (S.tried || [])[k];
+  if(!x) return;
+  attachImg(idx, x);
+  toast('第 ' + x.n + ' 张已保留');
+}
+
+function dropTry(k){
+  (S.tried || []).splice(k, 1);
+  if((S.tried || []).length) showGallery();
+  else closeModal();
+}
+
+function keepAllTries(){
+  var idx = S.triedFor;
+  (S.tried || []).forEach(function(x){ attachImg(idx, x); });
+  closeModal();
+  toast('全部保留');
+}
+
+/* ---------------- 画图 ---------------- */
+
+/** 生成时把当前这句的正文当画面描述，去掉标签与括号动作。 */
+function sceneOf(idx){
+  var m = S.messages[idx] || {};
+  return String(m.mes || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/（[^）]*）/g, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 400);
+}
+
+function genImage(idx){
+  if(S.busy){ toast('正在忙，等一下'); return; }
+  if(!S.img.hasKey){
+    showModal('还没配置画图',
+      '画图用的是 MiniMax 的 image-01，需要单独填一个 Key。\n\n'
+      + '去「设置 → 画图」填地址和 Key。');
+    return;
+  }
+  var scene = sceneOf(idx);
+  if(!scene){ toast('这条没什么可画的'); return; }
+
+  showModal('生成图片',
+    '<div class="ed">'
+  + '<div class="edhead">画面描述（可以直接改）</div>'
+  + '<textarea id="imgPrompt" style="min-height:120px">' + esc(scene) + '</textarea>'
+  + '<div class="muted" style="margin-top:6px">'
+  + (S.imgRef ? ('会把参考图「' + esc(S.imgRef) + '」交给模型照着画，人物长相由它决定。')
+              : '还没有参考图。没有的话只能靠文字描述人物长相，效果会不稳定 —— '
+                + '建议去「设置 → 画图」传一张。')
+  + '</div>'
+  + '<div class="muted" style="margin-top:4px">模型：' + esc(S.img.model) + '</div>'
+  + '</div>', true);
+  var f = $('modalFoot');
+  f.innerHTML = '<button onclick="closeModal()">取消</button>'
+    + '<button class="primary" onclick="doGenImage(' + idx + ')">生成</button>';
+}
+
+function doGenImage(idx){
+  var pr = ($('imgPrompt') ? $('imgPrompt').value : '').trim();
+  if(!pr){ toast('画面描述是空的'); return; }
+  closeModal();
+
+  var refData = '';
+  if(S.imgRef){
+    var rr = call('readRef', S.imgRef);
+    if(rr && rr.ok) refData = rr.dataUrl;
+  }
+
+  S.busy = true;
+  showModal('正在画', '<div class="ed">'
+    + '<div class="bar"><div class="fill" id="igFill" style="width:6%"></div></div>'
+    + '<div class="muted" id="igNote">已交给 ' + esc(S.img.model) + '…</div>'
+    + '<div class="muted" id="igTried"></div>'
+    + '<div class="muted">达标线 ' + simThreshold() + '%，不达标会自动重画（最多 '
+    + maxTries() + ' 次）。可以关掉这个窗口。</div>'
+    + '</div>', true);
+  $('modalFoot').innerHTML = '<button onclick="closeModal()">后台画</button>';
+  runPipeline(idx, pr, refData);
+}
+
+/** 消息下方折叠展开图片。 */
+function toggleImgs(idx){
+  var box = $('mi' + idx);
+  if(!box) return;
+  if(box.style.display !== 'none' && box.innerHTML){
+    box.style.display = 'none'; box.innerHTML = ''; return;
+  }
+  var m = S.messages[idx] || {};
+  var names = m.imgs || [];
+  if(!names.length) return;
+  box.style.display = 'block';
+  box.innerHTML = names.map(function(nm, k){
+    var d = S.imgCache[nm];
+    if(!d){
+      var r = call('readImage', nm);
+      if(r && r.ok){ d = r.dataUrl; S.imgCache[nm] = d; }
+    }
+    if(!d) return '<div class="muted">这张图读不出来了</div>';
+    var sim = (m.imgsim && m.imgsim[nm] != null) ? m.imgsim[nm] : null;
+    var line = (sim != null)
+      ? ('<div class="muted">与参考图相似度 '
+         + '<b class="' + (sim >= simThreshold() ? 'okc' : 'warnc') + '">'
+         + sim + '%</b></div>')
+      : '';
+    return '<div style="margin-top:8px">' + line
+      + '<img src="' + d + '" style="width:100%;border-radius:10px;display:block" '
+      + 'onclick="fullImg(\'' + esc(nm) + '\')">'
+      + '<div class="muted" style="margin-top:4px">点图放大 · '
+      + '<span style="color:#E5484D" onclick="dropImg(' + idx + ',' + k + ')">删除这张</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+function fullImg(name){
+  var d = S.imgCache[name];
+  if(!d){ var r = call('readImage', name); if(r && r.ok){ d = r.dataUrl; S.imgCache[name] = d; } }
+  if(!d){ toast('读不出来'); return; }
+  showModal('图片', '<div class="ed"><img src="' + d
+    + '" style="width:100%;border-radius:12px;display:block"></div>', true);
+}
+
+function dropImg(idx, k){
+  var m = S.messages[idx];
+  if(!m || !m.imgs) return;
+  m.imgs.splice(k, 1);
+  persist();
+  var box = $('mi' + idx);
+  if(box){ box.style.display = 'none'; box.innerHTML = ''; }
+  drawBubbles();
+  toast('已删除');
+}
+
+
+/* ============================================================
+   记忆宫殿
+   ============================================================
+   设计上它就是一本【特殊的世界书】(id = __palace__)。
+   这样存储、增删改、关键词注入全部复用世界书那套代码，
+   只有"归纳"和"压缩"两个动作是新的。
+
+   和酒馆的区别也在这：酒馆要你自己写关键词，这里让 AI 自己总结、
+   自己配关键词，用户一个字都不用写。
+   ============================================================ */
+
+var PALACE_ID = '__palace__';
+var MEM_LIMIT = 20000;      // token 上限
+var MEM_TRIGGER = 0.8;      // 用到 80% 就压
+
+function palace(){
+  var b = null;
+  S.worlds.forEach(function(w){ if(w.id === PALACE_ID) b = w; });
+  if(!b){
+    b = { id: PALACE_ID, name: '记忆宫殿', entries: [] };
+    S.worlds.push(b);
+  }
+  if(!b.entries) b.entries = [];
+  return b;
+}
+
+function memTokens(){
+  var n = 0;
+  palace().entries.forEach(function(e){
+    n += String(e.content || '').length;
+    n += (e.keys || []).join('').length;
+  });
+  return Math.round(n * 0.85);
+}
+
+function memPct(){
+  return Math.min(999, Math.round(memTokens() / MEM_LIMIT * 100));
+}
+
+/** 归纳：把最近的对话交给模型，让它总结成若干条记忆。 */
+function distill(){
+  if(S.busy){ toast('正在忙，等一下'); return; }
+  if(S.messages.length < 4){ toast('还没聊几句，不用归纳'); return; }
+
+  var recent = S.messages.slice(-16).map(function(m){
+    return (m.isUser ? ((S.persona && S.persona.name) || '用户') : S.char.name)
+      + '：' + String(m.mes || '').replace(/<[^>]+>/g, ' ').slice(0, 400);
+  }).join('\n');
+
+  var sys = '你在整理一段角色扮演对话的长期记忆。\n'
+    + '把下面的对话总结成若干条【独立、可检索】的记忆条目。要求：\n'
+    + '1. 每条只记一件事：发生过的关键事件、关系或状态变化、承诺与约定、'
+    + '重要的时间地点物品。\n'
+    + '2. 丢掉寒暄、重复描写、一次性的情绪。\n'
+    + '3. 每条给 3~5 个关键词，要具体（人名、地点、物品），'
+    + '不要用"对话""聊天"这种泛词。\n'
+    + '4. 已经在下面"已有记忆"里的内容不要重复。\n'
+    + '只输出 JSON 数组，不要解释、不要代码块：\n'
+    + '[{"comment":"短标题","keys":["关键词"],"content":"内容"}]';
+
+  var existing = palace().entries.map(function(e){
+    return '- [' + (e.comment || '') + '] ' + String(e.content || '').slice(0, 120);
+  }).join('\n');
+
+  S.busy = true;
+  showModal('正在归纳', '<div class="ed">'
+    + '<div class="bar"><div class="fill" id="dsFill" style="width:10%"></div></div>'
+    + '<div class="muted">把最近 ' + Math.min(16, S.messages.length)
+    + ' 条对话交给模型总结…</div></div>', true);
+  $('modalFoot').innerHTML = '<button onclick="closeModal()">后台跑</button>';
+
+  callOp('generate', [
+    sys,
+    '[]',
+    '',
+    '已有记忆：\n' + (existing || '（还没有）') + '\n\n要总结的对话：\n' + recent,
+    JSON.stringify({ temperature: 0.3, topP: 1.0, maxTokens: 2000, ctxLen: 2 })
+  ], function(r){
+    S.busy = false;
+    if(!r || !r.ok){
+      showModal('归纳失败', (r && r.error) || '未知错误');
+      return;
+    }
+    var t = String(r.text || '').replace(/```json|```/g, '');
+    var a = t.indexOf('['), b = t.lastIndexOf(']');
+    var arr = null;
+    try { arr = JSON.parse(t.slice(a, b + 1)); } catch(e){ arr = null; }
+    if(!arr || !arr.length){
+      showModal('归纳失败', '模型没有返回可解析的条目。原文：\n\n'
+        + String(r.text || '').slice(0, 400));
+      return;
+    }
+
+    var bk = palace();
+    var seen = {};
+    bk.entries.forEach(function(e){
+      seen[String(e.comment || '') + '|' + String(e.content || '').slice(0, 60)] = 1;
+    });
+    var added = 0;
+    arr.forEach(function(e){
+      if(!e || !e.content) return;
+      var k = String(e.comment || '') + '|' + String(e.content).slice(0, 60);
+      if(seen[k]) return;
+      // 正文高度重合也算重复
+      var dup = bk.entries.some(function(x){
+        var p = String(x.content || ''), q = String(e.content);
+        return p === q
+          || (p && q && (p.indexOf(q) >= 0 || q.indexOf(p) >= 0)
+              && Math.min(p.length, q.length) > 40);
+      });
+      if(dup) return;
+      seen[k] = 1;
+      bk.entries.push({
+        keys: Array.isArray(e.keys) ? e.keys : [],
+        comment: e.comment || '记忆',
+        content: String(e.content),
+        constant: false, disabled: false
+      });
+      added++;
+    });
+
+    if(!added){
+      showModal('没有新东西', '这次总结出来的内容都已经记过了。');
+      return;
+    }
+    call('saveWorld', JSON.stringify(bk));
+    var wl = call('listWorlds');
+    if(Array.isArray(wl)) S.worlds = wl;
+
+    var msg = '新增 ' + added + ' 条记忆，现在共 ' + palace().entries.length + ' 条（约 '
+      + memTokens() + ' / ' + MEM_LIMIT + ' token）';
+    if(memPct() >= MEM_TRIGGER * 100){
+      closeModal();
+      toast('已到 ' + memPct() + '%，开始压缩');
+      setTimeout(compressMem, 300);
+      return;
+    }
+    showModal('归纳完成', msg);
+  });
+}
+
+/** 压缩：常驻条目不动，其余交给模型归并成更少更紧凑的几条。 */
+function compressMem(){
+  var bk = palace();
+  var fixed = bk.entries.filter(function(e){ return e.constant; });
+  var loose = bk.entries.filter(function(e){ return !e.constant; });
+  if(loose.length < 4){ toast('条目太少，没什么可压的'); return; }
+
+  var payload = loose.map(function(e, i){
+    return i + '. [' + (e.comment || '') + '] 关键词(' + (e.keys || []).join('、')
+      + ') ' + String(e.content || '').slice(0, 300);
+  }).join('\n');
+
+  var sys = '你在整理一个长期记忆库。把下面的条目归并压缩：\n'
+    + '1. 重复或高度重叠的合并成一条。\n'
+    + '2. 已被后续发展取代的旧状态，只保留最新状态。\n'
+    + '3. 保留所有仍然有效的事实、关系、承诺、设定、时间地点物品。\n'
+    + '4. 合并后每条要更紧凑，但不要丢信息。\n'
+    + '5. 条数大约压到一半。\n'
+    + '每条给 3~5 个具体关键词。\n'
+    + '只输出 JSON 数组：\n'
+    + '[{"comment":"短标题","keys":["关键词"],"content":"内容"}]';
+
+  S.busy = true;
+  showModal('正在压缩记忆', '<div class="ed">'
+    + '<div class="bar"><div class="fill" style="width:20%"></div></div>'
+    + '<div class="muted">把 ' + loose.length + ' 条归并…</div></div>', true);
+  $('modalFoot').innerHTML = '<button onclick="closeModal()">后台跑</button>';
+
+  callOp('generate', [sys, '[]', '', payload,
+    JSON.stringify({ temperature: 0.3, topP: 1.0, maxTokens: 3000, ctxLen: 2 })
+  ], function(r){
+    S.busy = false;
+    if(!r || !r.ok){ showModal('压缩失败', (r && r.error) || ''); return; }
+    var t = String(r.text || '').replace(/```json|```/g, '');
+    var a = t.indexOf('['), b = t.lastIndexOf(']');
+    var arr = null;
+    try { arr = JSON.parse(t.slice(a, b + 1)); } catch(e){ arr = null; }
+    if(!arr || !arr.length){
+      showModal('压缩失败', '模型没有返回可解析的条目。');
+      return;
+    }
+    var fresh = arr.filter(function(e){ return e && e.content; }).map(function(e){
+      return {
+        keys: Array.isArray(e.keys) ? e.keys : [],
+        comment: e.comment || '合并记忆',
+        content: String(e.content),
+        constant: false, disabled: false
+      };
+    });
+    if(!fresh.length){ showModal('压缩失败', '没有产出有效条目。'); return; }
+
+    var before = bk.entries.length;
+    bk.entries = fixed.concat(fresh);
+    call('saveWorld', JSON.stringify(bk));
+    var wl = call('listWorlds');
+    if(Array.isArray(wl)) S.worlds = wl;
+    showModal('压缩完成',
+        '非常驻 ' + loose.length + ' 条 → ' + fresh.length + ' 条\n'
+      + '常驻 ' + fixed.length + ' 条原样保留\n'
+      + '总数 ' + before + ' → ' + bk.entries.length + '\n'
+      + '约 ' + memTokens() + ' / ' + MEM_LIMIT + ' token');
+  });
+}
+
+/** 打开记忆宫殿：列出条目、支持手动增删改。 */
+function openPalace(){
+  var bk = palace();
+  var h = '<div class="card">'
+    + '<div class="row"><span style="flex:1"><b>记忆宫殿</b></span>'
+    + '<span class="pill">' + memPct() + '%</span></div>'
+    + '<div class="muted">' + bk.entries.length + ' 条 · 约 ' + memTokens()
+    + ' / ' + MEM_LIMIT + ' token</div>'
+    + '<div class="bar" style="margin-top:8px"><div class="fill" style="width:'
+    + Math.min(100, memPct()) + '%"></div></div>'
+    + '<div class="muted" style="margin-top:6px">关键词在最近 8 条消息里出现时，'
+    + '对应记忆才会注入给 AI。带「常驻」的每轮都注入。</div>'
+    + '<div class="row" style="margin-top:10px">'
+    + '<button class="primary" onclick="closeModal();distill()">归纳当前对话</button>'
+    + '<button onclick="closeModal();compressMem()">压缩</button>'
+    + '</div></div>';
+
+  if(!bk.entries.length){
+    h += '<div class="muted" style="padding:8px">还是空的。聊一会儿再点「归纳」，'
+      + 'AI 会自己总结出记忆。</div>';
+  }
+  bk.entries.forEach(function(e, i){
+    h += '<div class="card"><div class="row">'
+      + '<div style="flex:1"><b>' + esc(e.comment || '记忆') + '</b>'
+      + (e.constant ? ' <span class="pill ok">常驻</span>' : '')
+      + '<div class="muted">' + esc(String(e.content || '').slice(0, 110)) + '</div>'
+      + '<div class="muted">关键词：' + esc((e.keys || []).join('、') || '（无）') + '</div>'
+      + '</div>'
+      + '<button onclick="toggleMemConst(' + i + ')">'
+      + (e.constant ? '取消常驻' : '设为常驻') + '</button>'
+      + '<button onclick="delMem(' + i + ')">删</button>'
+      + '</div></div>';
+  });
+  showModal('记忆宫殿', h, true);
+}
+
+function toggleMemConst(i){
+  var bk = palace();
+  bk.entries[i].constant = !bk.entries[i].constant;
+  call('saveWorld', JSON.stringify(bk));
+  openPalace();
+}
+
+function delMem(i){
+  var bk = palace();
+  bk.entries.splice(i, 1);
+  call('saveWorld', JSON.stringify(bk));
+  openPalace();
+}
+
+
+/* ============================================================
+   多身份 / 多 NPC
+   ============================================================ */
+
+function switchPersona(){
+  var h = '<div class="card"><h3>我是谁</h3>';
+  S.personas.forEach(function(p, i){
+    h += '<div class="row" style="padding:6px 0">'
+      + '<span style="flex:1">' + esc(p.name || '无名')
+      + (S.persona && S.persona.id === p.id ? ' <span class="pill ok">当前</span>' : '')
+      + '</span>'
+      + '<button onclick="usePersona(' + i + ')">切换</button>'
+      + '<button onclick="delPersona(' + i + ')">删</button></div>';
+  });
+  h += '</div>'
+    + '<div class="card"><h3>新增身份</h3>'
+    + '<label>名字</label><input id="npName" placeholder="换个名字">'
+    + '<label>设定</label><textarea id="npDesc" style="min-height:80px" '
+    + 'placeholder="这个身份是谁"></textarea>'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="addPersona()">添加</button></div></div>';
+  showModal('身份', h, true);
+}
+
+function usePersona(i){
+  S.persona = S.personas[i];
+  persistSettings(); savePersonas();
+  closeModal(); drawBubbles(); toast('已切换到 ' + (S.persona.name || ''));
+}
+
+function addPersona(){
+  var n = $('npName').value.trim();
+  if(!n){ toast('名字不能空着'); return; }
+  var p = { id:'p' + Date.now(), name:n, desc:$('npDesc').value.trim() };
+  S.personas.push(p);
+  S.persona = p;
+  savePersonas(); persistSettings();
+  closeModal(); drawBubbles(); toast('已添加并切换');
+}
+
+function delPersona(i){
+  if(S.personas.length <= 1){ toast('至少要留一个身份'); return; }
+  S.personas.splice(i, 1);
+  if(!S.personas.some(function(p){ return S.persona && p.id === S.persona.id; })){
+    S.persona = S.personas[0];
+  }
+  savePersonas(); switchPersona();
+}
+
+function savePersonas(){
+  call('savePersonas', JSON.stringify(S.personas));
+}
+
+function switchChar(){
+  var h = '<div class="card"><h3>和谁对话</h3>';
+  S.chars.forEach(function(c, i){
+    h += '<div class="row" style="padding:6px 0">'
+      + '<span style="flex:1">' + esc(c.name || '无名')
+      + (S.char && S.char.id === c.id ? ' <span class="pill ok">当前</span>' : '')
+      + '</span>'
+      + '<button onclick="useChar(' + i + ')">切换</button>'
+      + '<button onclick="delChar(' + i + ')">删</button></div>';
+  });
+  h += '</div>'
+    + '<div class="card"><h3>新增角色</h3>'
+    + '<div class="muted">会重新走一遍设置向导（角色卡那一步）。</div>'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="addChar()">新建角色</button></div></div>';
+  showModal('角色', h, true);
+}
+
+function useChar(i){
+  S.char = S.chars[i];
+  persistSettings();
+  closeModal();
+  openChat();
+  toast('已切换到 ' + (S.char.name || ''));
+}
+
+function addChar(){
+  closeModal();
+  S.editingChar = null;
+  S.step = 2;
+  S.screen = 'wizard';
+  render();
+  toast('填好后点完成就会加进列表');
+}
+
+function delChar(i){
+  var c = S.chars[i];
+  if(S.chars.length <= 1){ toast('至少要留一个角色'); return; }
+  call('deleteChar', c.id);
+  S.chars.splice(i, 1);
+  if(S.char && S.char.id === c.id){
+    S.char = S.chars[0];
+    openChat();
+  }
+  switchChar();
+}
+
+/* ============================================================
+   附件：图片 / 文件 / 链接
+   ============================================================ */
+
+function openAttach(){
+  var has = (S.attach.images.length || S.attach.text);
+  showModal('添加附件',
+      '<div class="card"><h3>图片</h3>'
+    + '<div class="muted">会直接交给模型看图（前提是你选的模型支持视觉）。</div>'
+    + '<div style="margin-top:8px"><button onclick="closeModal();pickAttachImage()">'
+    + '选图片</button></div>'
+    + (S.attach.images.length
+        ? '<div class="muted" style="margin-top:6px">已选 ' + S.attach.images.length + ' 张</div>'
+        : '')
+    + '</div>'
+    + '<div class="card"><h3>文件</h3>'
+    + '<div class="muted">txt / md / json / csv 会被读成文本一起发过去。</div>'
+    + '<div style="margin-top:8px"><button onclick="closeModal();pickAttachFile()">'
+    + '选文件</button></div>'
+    + (S.attach.text ? '<div class="muted" style="margin-top:6px">已载入 '
+        + S.attach.text.length + ' 字</div>' : '')
+    + '</div>'
+    + '<div class="card"><h3>链接</h3>'
+    + '<label>网址</label><input id="atUrl" placeholder="https://…" '
+    + 'autocapitalize="off" spellcheck="false">'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="grabLink()">抓取正文</button></div></div>'
+    + (has ? '<div class="card"><h3>当前附件</h3><div class="muted">'
+        + esc(attachSummary()) + '</div>'
+        + '<div style="margin-top:8px"><button onclick="clearAttach();closeModal()">'
+        + '清空</button></div></div>' : ''), true);
+}
+
+function attachSummary(){
+  var bits = [];
+  if(S.attach.images.length) bits.push(S.attach.images.length + ' 张图片');
+  if(S.attach.text) bits.push('一段文本（' + S.attach.text.length + ' 字）');
+  return bits.join(' + ') || '（空）';
+}
+
+function clearAttach(){
+  S.attach = { images: [], text: '', label: '' };
+  updateAttachBar();
+}
+
+function updateAttachBar(){
+  var el = $('attachBar');
+  if(!el) return;
+  var has = (S.attach.images.length || S.attach.text);
+  if(!has){ el.classList.add('hide'); el.innerHTML = ''; return; }
+  el.classList.remove('hide');
+  el.innerHTML = '📎 ' + esc(attachSummary())
+    + ' <span style="color:#E5484D" onclick="clearAttach()">清空</span>';
+}
+
+function pickAttachImage(){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.multiple = true;
+  inp.onchange = function(){
+    var fs = Array.prototype.slice.call(inp.files || []);
+    if(!fs.length) return;
+    var left = fs.length;
+    fs.forEach(function(f){
+      var fr = new FileReader();
+      fr.onload = function(){
+        S.attach.images.push(String(fr.result));
+        if(--left === 0){ updateAttachBar(); toast('加了 ' + fs.length + ' 张图'); }
+      };
+      fr.readAsDataURL(f);
+    });
+  };
+  inp.click();
+}
+
+function pickAttachFile(){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.txt,.md,.json,.csv,text/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      S.attach.text = String(fr.result).slice(0, 12000);
+      S.attach.label = f.name;
+      updateAttachBar();
+      toast('已载入 ' + f.name);
+    };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+
+function grabLink(){
+  var u = ($('atUrl') ? $('atUrl').value : '').trim();
+  if(!u){ toast('先填网址'); return; }
+  S.busy = true;
+  showModal('正在抓取', '<div class="ed"><div class="bar"><div class="fill" '
+    + 'style="width:30%"></div></div><div class="muted">' + esc(u) + '</div></div>', true);
+  $('modalFoot').innerHTML = '<button onclick="closeModal()">后台</button>';
+  callOp('fetchUrl', [u], function(r){
+    S.busy = false;
+    if(!r || !r.ok){ showModal('抓取失败', (r && r.error) || ''); return; }
+    S.attach.text = r.text;
+    S.attach.label = u;
+    updateAttachBar();
+    showModal('抓到了', '正文 ' + r.text.length + ' 字，已经挂在这条消息上。');
+  });
+}
+
+/* ---------------- 状态条 ---------------- */
+function previewLog(){
+  var t = buildLog();
+  showModal('日志预览（' + t.length + ' 字）', t.slice(0, 4000));
+  $('modalFoot').innerHTML =
+      '<button onclick="closeModal()">关闭</button>'
+    + '<button class="primary" onclick="closeModal();exportLog()">导出</button>';
+}
+
+/* ---------------- 设置：联网 ---------------- */
+
+function openSearchSettings(){
+  var q = S.search;
+  showModal('联网搜索',
+      '<div class="card"><h3>搜索接口</h3>'
+    + '<div class="muted">用的是 MiniMax 的联网能力，走 Anthropic 风格的接口。'
+    + '地址和 Key 都填你自己的。</div>'
+    + '<label>接口地址</label><input id="qBase" value="' + esc(q.base || '') + '">'
+    + '<label>API Key</label>'
+    + '<input id="qKey" type="password" placeholder="'
+    + (q.hasKey ? ('已保存 ' + esc(q.keyHint || '') + '，留空则不修改') : '粘贴你的 Key')
+    + '">'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="saveSearchCfg()">保存</button></div></div>', true);
+}
+
+function saveSearchCfg(){
+  var b = $('qBase').value.trim();
+  var k = $('qKey').value;
+  var r = call('saveSearchConfig', b, k);
+  if(!r || !r.ok){ showModal('保存失败', (r && r.error) || ''); return; }
+  var sq = call('searchState');
+  if(sq && sq.ok){ S.search = sq; }
+  toast('已保存');
+  closeModal();
+}
+
+/* ---------------- 设置：画图 ---------------- */
+
+function openImgSettings(){
+  var i = S.img;
+  var refs = call('listRefs');
+  refs = Array.isArray(refs) ? refs : [];
+  var h = '<div class="card"><h3>画图接口</h3>'
+    + '<div class="muted">默认走 MiniMax 的 image-01，也可以换成别的兼容地址。'
+    + 'Key 单独存，加密保存。</div>'
+    + '<label>接口地址</label><input id="iBase" value="' + esc(i.base || '') + '">'
+    + '<label>模型名</label><input id="iModel" value="' + esc(i.model || 'image-01') + '">'
+    + '<label>API Key</label>'
+    + '<input id="iKey" type="password" placeholder="'
+    + (i.hasKey ? ('已保存 ' + esc(i.keyHint || '') + '，留空则不修改') : '粘贴你的 Key')
+    + '">'
+    + '<div class="grid2" style="margin-top:10px">'
+    + '<div><label>相似度阈值 %</label><input id="iTh" value="'
+    + simThreshold() + '"></div>'
+    + '<div><label>最多重画次数</label><input id="iTries" value="'
+    + maxTries() + '"></div></div>'
+    + '<div class="muted" style="margin-top:4px">低于阈值就打回重画。'
+    + '需要聊天模型能看图才能评判；判不了的时候不会当作合格。</div>'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="saveImgCfg()">保存</button></div></div>';
+
+  h += '<div class="card"><h3>参考图</h3>'
+    + '<div class="muted">传一张角色图，画图时会交给模型照着画。'
+    + '这是让"画出来的人像本人"最有效的办法 —— 光靠文字描述很不稳定。</div>';
+  if(refs.length){
+    h += '<div style="margin-top:8px">';
+    refs.forEach(function(r){
+      var sel = (r.name === S.imgRef);
+      h += '<div class="row" style="padding:6px 0">'
+        + '<span style="flex:1">' + esc(r.name)
+        + (sel ? ' <span class="pill ok">使用中</span>' : '') + '</span>'
+        + '<button onclick="pickRef(\'' + esc(r.name) + '\')">'
+        + (sel ? '取消' : '使用') + '</button>'
+        + '<button onclick="delRef(\'' + esc(r.name) + '\')">删除</button>'
+        + '</div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="muted" style="margin-top:8px">还没有参考图。</div>';
+  }
+  h += '<div style="margin-top:10px"><button onclick="pickRefFile()">'
+    + '＋ 上传参考图</button></div></div>';
+
+  showModal('画图', h, true);
+}
+
+function saveImgCfg(){
+  var b = $('iBase').value.trim();
+  var m = $('iModel').value.trim() || 'image-01';
+  var k = $('iKey').value;
+  var th = parseInt($('iTh').value, 10);
+  var tr = parseInt($('iTries').value, 10);
+  S.imgThreshold = (isNaN(th) || th < 0 || th > 100) ? SIM_DEFAULT : th;
+  S.imgTries = (isNaN(tr) || tr < 1 || tr > 10) ? TRIES_DEFAULT : tr;
+  persistSettings();
+  var r = call('saveImgConfig', b, m, k);
+  if(!r || !r.ok){ showModal('保存失败', (r && r.error) || ''); return; }
+  var sq = call('searchState');
+  if(sq && sq.ok){ S.search = sq; }
+
+  var ig = call('imgState');
+  if(ig && ig.ok){ S.img = ig; }
+  toast('已保存');
+  openImgSettings();
+}
+
+function pickRef(name){
+  S.imgRef = (S.imgRef === name) ? '' : name;
+  persistSettings();
+  openImgSettings();
+}
+
+function delRef(name){
+  call('deleteRef', name);
+  if(S.imgRef === name) S.imgRef = '';
+  persistSettings();
+  openImgSettings();
+}
+
+/** 走系统图片选择器读一张图，转成 data URL 存为参考图。 */
+function pickRefFile(){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      var nm = 'ref-' + Date.now() + '.jpg';
+      var r = call('saveRef', nm, String(fr.result));
+      if(!r || !r.ok){ showModal('保存失败', (r && r.error) || ''); return; }
+      S.imgRef = nm;
+      persistSettings();
+      toast('参考图已保存');
+      openImgSettings();
+    };
+    fr.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+/* ---------------- 设置入口补一项 ---------------- */
+/* ---------------- 世界书 ---------------- */
+
+function openWorlds(){
+  var h = '<div class="card"><h3>世界书</h3>'
+    + '<div class="muted">一本世界书里可以放很多条目。每个条目填几个关键词，'
+    + '聊到这些词时它的内容就会被 AI 看到。</div>'
+    + '<div style="margin-top:10px"><button class="primary" '
+    + 'onclick="editWorld(-1)">新建世界书</button></div></div>';
+  if(!S.worlds.length){
+    h += '<div class="muted" style="padding:8px">还没有世界书。</div>';
+  }
+  S.worlds.forEach(function(w, i){
+    var n = (w.entries || []).length;
+    var on = S.worldOn[w.id] !== false;
+    h += '<div class="card"><div class="row">'
+      + '<div style="flex:1"><b>' + esc(w.name || '未命名') + '</b>'
+      + '<div class="muted">' + n + ' 条 · ' + (on ? '已启用' : '已停用') + '</div></div>'
+      + '<button onclick="toggleWorld(' + i + ')">' + (on ? '停用' : '启用') + '</button>'
+      + '<button onclick="editWorld(' + i + ')">编辑</button>'
+      + '</div></div>';
+  });
+  showModal('世界书', h, true);
+}
+
+function toggleWorld(i){
+  var w = S.worlds[i];
+  S.worldOn[w.id] = (S.worldOn[w.id] === false);
+  persistSettings();
+  openWorlds();
+}
+
+function editWorld(wi){
+  var w = wi < 0 ? { id:'w' + Date.now(), name:'', entries:[] }
+                 : JSON.parse(JSON.stringify(S.worlds[wi]));
+  var h = '<label>世界书名字</label><input id="wName" value="' + esc(w.name || '') + '">'
+    + '<div class="edhead" style="margin-top:14px">条目</div>';
+  (w.entries || []).forEach(function(e, i){
+    h += '<div class="card" style="margin-top:8px">'
+      + '<label>关键词（逗号分隔）</label>'
+      + '<input id="we_k' + i + '" value="' + esc((e.keys || []).join(',')) + '">'
+      + '<label>内容</label>'
+      + '<textarea id="we_c' + i + '">' + esc(e.content || '') + '</textarea>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px">'
+      + '<input type="checkbox" id="we_x' + i + '" style="width:auto"'
+      + (e.constant ? ' checked' : '') + '> 常驻（不看关键词，每轮都注入）</label>'
+      + '<div style="margin-top:8px"><button onclick="delWorldEntry(' + wi + ',' + i
+      + ')">删除这一条</button></div></div>';
+  });
+  h += '<div style="margin-top:12px"><button onclick="addWorldEntry(' + wi + ')">'
+    + '＋ 加一个条目</button></div>'
+    + '<div class="row" style="margin-top:14px">'
+    + '<button style="flex:1" onclick="openWorlds()">返回</button>'
+    + '<button class="primary" style="flex:2" onclick="saveWorld(' + wi + ')">保存</button>'
+    + '</div>';
+  S.editingWorld = w;
+  showModal('编辑世界书', h, true);
+}
+
+function collectWorld(){
+  var w = S.editingWorld;
+  w.name = $('wName').value.trim();
+  (w.entries || []).forEach(function(e, i){
+    var k = $('we_k' + i), c = $('we_c' + i), x = $('we_x' + i);
+    if(k) e.keys = k.value.split(/[,，]/).map(function(s){ return s.trim(); })
+      .filter(function(s){ return s; });
+    if(c) e.content = c.value;
+    if(x) e.constant = x.checked;
+  });
+  return w;
+}
+
+function addWorldEntry(wi){
+  var w = collectWorld();
+  w.entries = w.entries || [];
+  w.entries.push({ keys:[], content:'', constant:false, disabled:false });
+  S.editingWorld = w;
+  redrawWorldEditor(wi);
+}
+
+function delWorldEntry(wi, i){
+  var w = collectWorld();
+  w.entries.splice(i, 1);
+  S.editingWorld = w;
+  redrawWorldEditor(wi);
+}
+
+function redrawWorldEditor(wi){
+  var keep = S.editingWorld;
+  var idx = wi;
+  // 把暂存内容塞回 S.worlds 让 editWorld 复用同一套渲染
+  if(idx < 0){
+    S.worlds.push(keep);
+    idx = S.worlds.length - 1;
+  } else {
+    S.worlds[idx] = keep;
+  }
+  editWorld(idx);
+}
+
+function saveWorld(wi){
+  var w = collectWorld();
+  var r = call('saveWorld', JSON.stringify(w));
+  if(!r || !r.ok){ toast('保存失败'); return; }
+  var sq = call('searchState');
+  if(sq && sq.ok){ S.search = sq; }
+
+  var ig = call('imgState');
+  if(ig && ig.ok){ S.img = ig; }
+
+  var wl = call('listWorlds');
+  S.worlds = Array.isArray(wl) ? wl : [];
+  toast('已保存');
+  openWorlds();
+}
+
+/* ---------------- 聊天记录导出 / 导入 ---------------- */
+
+function exportChatTxt(){
+  var lines = [];
+  lines.push('# AsamaTavern 聊天记录');
+  lines.push('# 角色：' + (S.char ? S.char.name : ''));
+  lines.push('# 我：' + ((S.persona && S.persona.name) || ''));
+  lines.push('# 时间：' + new Date().toLocaleString());
+  lines.push('');
+  S.messages.forEach(function(m){
+    lines.push('[' + (m.isUser ? ((S.persona && S.persona.name) || '我')
+                               : (S.char ? S.char.name : '角色')) + ']');
+    lines.push(m.mes || '');
+    lines.push('');
+  });
+  var nm = 'chat-' + (S.char ? S.char.name : 'log') + '-'
+    + new Date().toISOString().slice(0, 10) + '.txt';
+  var r = call('exportText', nm, lines.join('\n'));
+  if(!r || !r.ok){
+    showModal('导出失败', (r && r.error) || '拿不到文件选择器。');
+    return;
+  }
+  log('导出聊天记录：' + nm);
+  toast('选个位置保存');
+}
+
+window.__atImport = function(text){
+  try {
+    var lines = String(text).split('\n');
+    var msgs = [];
+    var cur = null;
+    lines.forEach(function(ln){
+      var m = /^\[(.+?)\]\s*$/.exec(ln);
+      if(m){
+        if(cur) msgs.push(cur);
+        cur = { who: m[1], buf: [] };
+        return;
+      }
+      if(ln.indexOf('#') === 0 && !cur) return;
+      if(cur) cur.buf.push(ln);
+    });
+    if(cur) msgs.push(cur);
+    var me = (S.persona && S.persona.name) || '';
+    var out = msgs.map(function(x){
+      return { isUser: (x.who === me || x.who === '我' || x.who === 'You'),
+               mes: x.buf.join('\n').trim() };
+    }).filter(function(x){ return x.mes; });
+    if(!out.length){ showModal('导入失败', '这个文件里没解析出对话。'); return; }
+    showModal('导入聊天记录',
+      '解析到 ' + out.length + ' 条消息。\n\n'
+      + '选「追加」会接在现在这段后面，选「替换」会清掉现在的。', false);
+    var f = $('modalFoot');
+    f.innerHTML = '<button onclick="closeModal()">取消</button>'
+      + '<button onclick="doImport(' + JSON.stringify(JSON.stringify(out))
+      + ',false)">追加</button>'
+      + '<button class="primary" onclick="doImport('
+      + JSON.stringify(JSON.stringify(out)) + ',true)">替换</button>';
+  } catch(e){
+    showModal('导入失败', '文件读不懂：' + e.message);
+  }
+};
+
+function doImport(json, replace){
+  var list = JSON.parse(json);
+  S.messages = replace ? list : S.messages.concat(list);
+  persist();
+  drawBubbles();
+  closeModal();
+  toast('已导入 ' + list.length + ' 条');
+}
+
+function importChatTxt(){
+  var r = call('importText');
+  if(!r || !r.ok){
+    showModal('导入失败', (r && r.error) || '拿不到文件选择器。');
+    return;
+  }
+  log('开始导入聊天记录');
+}
+
+function saveParams(){
+  function num(id, def, lo, hi){
+    var v = parseFloat($(id).value);
+    if(isNaN(v)) return def;
+    return Math.max(lo, Math.min(hi, v));
+  }
+  S.params = {
+    temperature: num('sTemp', 0.9, 0, 1.3),
+    topP:        num('sTopP', 1.0, 0.05, 1),
+    maxTokens:   Math.round(num('sMax', 1024, 32, 32000)),
+    ctxLen:      Math.round(num('sCtx', 20, 2, 200)),
+    freqPen:     num('sFreq', 0, -2, 2),
+    presPen:     num('sPres', 0, -2, 2),
+    deepThinking: $('sThink').checked
+  };
+  S.autoSearch = $('sAuto') ? $('sAuto').checked : S.autoSearch;
+  persistSettings();
+  closeModal();
+  toast('参数已保存');
+}
+
+/* ---------------------------------------------------------------- 启动 */
+
+window.onerror = function(msg, src, line, col){
+  toast('出错了（第 ' + line + ' 行）：' + msg);
+  return false;
+};
+
+boot();
+</script>
+</body>
+</html>
