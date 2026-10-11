@@ -220,7 +220,9 @@ def main():
     step('6/7', '初始化并提交')
     if not already:
         print('  ' + run(['git', 'init']).stdout.strip())
-        run(['git', 'branch', '-M', 'main'])
+    # 无论新建还是沿用已有的 .git，都统一成 main —— 否则脚本最后打印的
+    # push 命令会因为分支名对不上而失败（GitHub 默认分支是 main）
+    run(['git', 'branch', '-M', 'main'])
     # 提交者身份会永久留在开源项目的提交历史里，不替用户猜 —— 缺了就问
     name = run(['git', 'config', 'user.name']).stdout.strip()
     mail = run(['git', 'config', 'user.email']).stdout.strip()
