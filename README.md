@@ -1,8 +1,25 @@
 # AsamaTavern
 
+[![下载 APK](https://img.shields.io/badge/下载-APK-3B9EFF?style=for-the-badge&logo=android&logoColor=white)](https://github.com/HZYqwq/AsamaTavern/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2FB37A?style=for-the-badge)](https://github.com/HZYqwq/AsamaTavern/blob/main/LICENSE)
+
 **装好就能聊的本地 AI 酒馆。** 不搭服务器、不注册账号，填一个 API Key 就能开始角色扮演。
 
 所有数据 —— 角色卡、世界书、聊天记录、密钥 —— 都在这台手机上。没有中转服务器，请求从手机直接发给你选的那家大模型。
+
+---
+
+## 下载安装
+
+[**⬇ 下载最新版 APK**](https://github.com/HZYqwq/AsamaTavern/releases/latest)
+
+1. 手机浏览器打开上面的链接，下载 `AsamaTavern-x.x.apk`
+2. 系统会提示「未知来源应用」，允许即可
+3. 打开 App，跟着四步向导走：连接模型 → 我是谁 → 和谁对话 → 开始
+
+> 只提供 APK，没有上架任何应用商店。
+> 首次使用需要一个你自己的大模型 API Key（DeepSeek / GLM / Kimi / Qwen 都行，
+> 也能手填别的兼容地址）。Key 只存在你手机上，用系统密钥库加密。
 
 ---
 
